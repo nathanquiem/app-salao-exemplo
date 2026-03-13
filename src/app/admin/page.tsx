@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
@@ -310,7 +310,7 @@ export default function PainelSalao() {
         duration_minutes: parseInt(serviceForm.duration, 10),
         description: serviceForm.description,
         image_url: imageUrl,
-        empresa_id: profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d"
+        empresa_id: profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!
       }
 
       if (editingServiceId) {
@@ -393,7 +393,7 @@ export default function PainelSalao() {
         name: barberForm.name, 
         active: barberForm.active,
         photo_url: imageUrl,
-        empresa_id: profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d"
+        empresa_id: profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!
       }
       
       let barberId = editingBarberId
@@ -446,7 +446,7 @@ export default function PainelSalao() {
 
   // --- CONFIG LOGIC ---
   const fetchConfig = async () => {
-    const empresaId = profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d"
+    const empresaId = profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!
     const { data } = await supabase
       .from('business_config')
       .select('*')
@@ -468,7 +468,7 @@ export default function PainelSalao() {
       }
       
       if (!config.id) {
-        payload.empresa_id = profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d"
+        payload.empresa_id = profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!
         const { data, error } = await supabase.from('business_config').insert(payload).select().single()
         if (error) {
           if (error.message.includes('closed_dates')) {
@@ -632,7 +632,7 @@ export default function PainelSalao() {
         service_id: quickServiceId,
         start_time: bookingDate.toISOString(),
         end_time: endTime.toISOString(),
-        empresa_id: profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d",
+        empresa_id: profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!,
         status: 'confirmed',
         guest_name: quickName,        
         guest_phone: quickPhone || null
