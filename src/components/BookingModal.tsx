@@ -664,9 +664,9 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
             </div>
           )}
         </div>        {/* Footer */}
-        <div className="bg-green-50 pb-4 pt-2 text-center border-t border-green-100 mx-6">
+        <div className="pb-6 pt-6 text-center w-full">
           <p className="text-xs text-green-700">
-            Desenvolvido por <a href="https://mundoai.com.br" target="_blank" rel="noopener noreferrer" className="text-green-800 font-semibold hover:text-green-900 hover:underline transition-colors mt-2 block">MundoAI - Soluções Comerciais</a>
+            Desenvolvido por <a href="https://mundoai.com.br" target="_blank" rel="noopener noreferrer" className="text-green-800 font-semibold hover:text-green-900 hover:underline transition-colors mt-2 block">MundoAI - Agenda Inteligente</a>
           </p>
         </div>
       </div>

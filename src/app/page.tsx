@@ -132,15 +132,19 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <div className="w-full relative h-[600px] sm:h-[700px] flex items-center justify-center overflow-hidden">
-        {/* Background Images */}
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden sm:block" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz.jpg')" }}></div>
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat sm:hidden" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz-mobile.jpg')" }}></div>
+      {/* We apply a negative top margin to pull it behind the 80px static relative header, while adjusting min-heights */}
+      <div className="w-full relative min-h-[100dvh] flex items-center justify-center overflow-hidden -mt-20">
         
-        {/* Gradient Overlay for Readability */}
+        {/* Mobile Background Image */}
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat sm:hidden" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz-mobile.jpg')" }}></div>
+
+        {/* Desktop Background Image */}
+        <div className="absolute inset-0 bg-cover bg-top bg-no-repeat hidden sm:block" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz.jpg')" }}></div>
+        
+        {/* Gradient Overlay for Readability (Now active on BOTH mobile and desktop) */}
         <div className="absolute inset-0 bg-gradient-to-b from-green-950/60 via-green-900/50 to-green-950/90 mix-blend-multiply"></div>
 
-        <main className="w-full max-w-6xl mx-auto px-4 py-12 relative z-10 flex flex-col justify-center items-center h-full text-center">
+        <main className="w-full max-w-6xl mx-auto px-4 relative z-10 flex flex-col justify-center items-center h-full pt-16 text-center scale-[1.05] sm:scale-110">
           <section className="flex flex-col items-center space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white/90 text-sm font-medium">
               <Scissors className="w-4 h-4 text-emerald-300" />
