@@ -1017,9 +1017,8 @@ export default function PainelSalao() {
 
   // --- METRICS STATE ---
 
-  // Admin route guard
   useEffect(() => {
-    if (!authLoading && (!user || profile?.role !== 'admin')) {
+    if (!authLoading && (!user || (profile?.role !== 'admin' && profile?.role !== 'admin-salao'))) {
       router.push('/')
     }
   }, [authLoading, user, profile, router])
@@ -1027,7 +1026,7 @@ export default function PainelSalao() {
   if (authLoading) {
     return <div className="min-h-screen bg-black flex items-center justify-center text-white">Carregando...</div>
   }
-  if (!user || profile?.role !== 'admin') {
+  if (!user || (profile?.role !== 'admin' && profile?.role !== 'admin-salao')) {
     return <div className="min-h-screen bg-black flex items-center justify-center text-white">Acesso negado. Redirecionando...</div>
   }
 
