@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation'
 import { BookingModal } from '@/components/BookingModal'
 import { Footer } from '@/components/Footer'
 
-const EMPRESA_ID = '7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d'
+const EMPRESA_ID = process.env.NEXT_PUBLIC_EMPRESA_ID!
 
 export default function DashboardPage() {
   const { user, profile, setProfile, logout, isLoading: authLoading } = useAuthStore()

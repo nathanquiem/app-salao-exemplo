@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { LogIn, CalendarDays, MessageCircle, MapPin, Scissors } from 'lucide-react'
 import { createClient } from '@/lib/supabase-browser'
 
-const EMPRESA_ID = '7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d'
+const EMPRESA_ID = process.env.NEXT_PUBLIC_EMPRESA_ID!
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LandingPage() {
