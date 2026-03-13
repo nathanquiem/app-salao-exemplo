@@ -1047,7 +1047,7 @@ export default function PainelSalao() {
       {/* SIDEBAR PC */}
       <aside className="w-64 border-r border-zinc-800 bg-zinc-950 flex-col hidden md:flex shrink-0">
         <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-bold text-white tracking-tight"><span className="text-red-500">Painel</span>Styllus</h2>
+          <h2 className="text-xl font-bold text-white tracking-tight"><span className="text-green-500">Painel</span>Salão</h2>
         </div>
         
         <nav className="flex-1 p-4 flex flex-col gap-2">
@@ -1070,7 +1070,7 @@ export default function PainelSalao() {
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-zinc-400 hover:text-white">
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <h1 className="text-lg font-bold text-white"><span className="text-red-500">Painel</span>Styllus</h1>
+            <h1 className="text-lg font-bold text-white"><span className="text-green-500">Painel</span>Salão</h1>
           </div>
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5 text-zinc-400" />
@@ -1108,7 +1108,7 @@ export default function PainelSalao() {
                   <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
                     <Label className="text-zinc-400 whitespace-nowrap">Selecione o Mês:</Label>
                     <select 
-                      className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-3 py-2 w-48 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-3 py-2 w-48 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       value={historyMonth}
                       onChange={(e) => setHistoryMonth(e.target.value)}
                     >
@@ -1250,7 +1250,7 @@ export default function PainelSalao() {
                         <select 
                           value={quickServiceId} 
                           onChange={e => setQuickServiceId(e.target.value)}
-                          className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500"
+                          className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
                         >
                           <option value="">Selecione...</option>
                           {services
@@ -1263,7 +1263,7 @@ export default function PainelSalao() {
                         <select 
                           value={quickBarberId} 
                           onChange={e => setQuickBarberId(e.target.value)}
-                          className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500"
+                          className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
                         >
                           <option value="">Qualquer Barbeiro...</option>
                           {barbersList.filter((b: any) => b.active !== false).map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -1318,7 +1318,7 @@ export default function PainelSalao() {
                                     isOccupied
                                       ? 'bg-zinc-950 border-zinc-900 text-zinc-600 cursor-not-allowed opacity-50 line-through'
                                       : quickTime === slot
-                                      ? 'bg-red-500 border-red-500 text-white font-medium'
+                                      ? 'bg-emerald-500 border-emerald-500 text-white font-medium'
                                       : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
                                   }`}
                                 >
@@ -1332,7 +1332,7 @@ export default function PainelSalao() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4 bg-red-600 hover:bg-red-700" onClick={handleConfirmQuickBooking} disabled={isQuickBooking}>
+                    <Button className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700" onClick={handleConfirmQuickBooking} disabled={isQuickBooking}>
                       {isQuickBooking ? 'Salvando...' : 'Confirmar Encaixe'}
                     </Button>
                   </CardContent>
@@ -1349,7 +1349,7 @@ export default function PainelSalao() {
                     <p className="text-zinc-400 text-sm">Gerencie os cortes e os valores cobrados.</p>
                   </div>
                   {!isCreatingService && (
-                    <Button onClick={() => { setIsCreatingService(true); setEditingServiceId(null); setServiceForm({name:'', price:'', duration:'', description:'', image_url:''}) }} className="bg-red-600 hover:bg-red-700 shrink-0">
+                    <Button onClick={() => { setIsCreatingService(true); setEditingServiceId(null); setServiceForm({name:'', price:'', duration:'', description:'', image_url:''}) }} className="bg-emerald-600 hover:bg-emerald-700 shrink-0">
                       <Plus className="w-4 h-4 mr-2" /> Novo Serviço
                     </Button>
                   )}
@@ -1385,7 +1385,7 @@ export default function PainelSalao() {
                           <div className="space-y-2">
                             <Label>Descrição</Label>
                             <textarea 
-                              className="flex w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 min-h-[80px]"
+                              className="flex w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 min-h-[80px]"
                               value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})}
                               placeholder="Detalhes sobre o serviço..."
                             />
@@ -1471,7 +1471,7 @@ export default function PainelSalao() {
                     <p className="text-zinc-400 text-sm">Gerencie os profissionais e os serviços que cada um realiza.</p>
                   </div>
                   {!isCreatingBarber && (
-                    <Button onClick={() => { setIsCreatingBarber(true); setEditingBarberId(null); setBarberForm({name:'', active:true, selectedServices:[], photo_url: ''}); setBarberImageFile(null) }} className="bg-red-600 hover:bg-red-700 shrink-0">
+                    <Button onClick={() => { setIsCreatingBarber(true); setEditingBarberId(null); setBarberForm({name:'', active:true, selectedServices:[], photo_url: ''}); setBarberImageFile(null) }} className="bg-emerald-600 hover:bg-emerald-700 shrink-0">
                       <Plus className="w-4 h-4 mr-2" /> Novo Barbeiro
                     </Button>
                   )}
@@ -1543,9 +1543,9 @@ export default function PainelSalao() {
                             <div 
                               key={s.id} 
                               onClick={() => toggleServiceForBarber(s.id)}
-                              className={`p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-colors ${barberForm.selectedServices.includes(s.id) ? 'border-red-500 bg-red-500/10' : 'border-zinc-800 bg-zinc-900 hover:border-zinc-600'}`}
+                              className={`p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-colors ${barberForm.selectedServices.includes(s.id) ? 'border-emerald-500 bg-emerald-500/10' : 'border-zinc-800 bg-zinc-900 hover:border-zinc-600'}`}
                             >
-                              <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${barberForm.selectedServices.includes(s.id) ? 'bg-red-500 border-red-500' : 'border-zinc-600'}`}>
+                              <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${barberForm.selectedServices.includes(s.id) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-600'}`}>
                                 {barberForm.selectedServices.includes(s.id) && <CheckCircle className="w-3 h-3 text-white" />}
                               </div>
                               <span className="text-sm font-medium text-white line-clamp-1">{s.name}</span>
@@ -1610,7 +1610,7 @@ export default function PainelSalao() {
                 <div className="flex flex-col gap-4">
                   <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6 text-red-500" /> Dashboard de Métricas
+                      <BarChart3 className="w-6 h-6 text-emerald-500" /> Dashboard de Métricas
                     </h2>
                     <p className="text-zinc-400 text-sm">Acompanhe o desempenho financeiro e os agendamentos.</p>
                   </div>
@@ -1629,7 +1629,7 @@ export default function PainelSalao() {
                         onClick={() => applyMetricPreset(p.key)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                           metricPreset === p.key
-                            ? 'bg-red-600 border-red-500 text-white'
+                            ? 'bg-emerald-600 border-emerald-500 text-white'
                             : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
                         }`}
                       >
@@ -1646,7 +1646,7 @@ export default function PainelSalao() {
                         type="date"
                         value={metricDateStart}
                         onChange={e => { setMetricDateStart(e.target.value); setMetricPreset('custom') }}
-                        className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -1655,7 +1655,7 @@ export default function PainelSalao() {
                         type="date"
                         value={metricDateEnd}
                         onChange={e => { setMetricDateEnd(e.target.value); setMetricPreset('custom') }}
-                        className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        className="bg-zinc-900 border border-zinc-800 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
                     <label className="flex items-center gap-2 ml-auto cursor-pointer select-none">
@@ -1663,7 +1663,7 @@ export default function PainelSalao() {
                       <div
                         onClick={() => setMetricCompare(!metricCompare)}
                         className={`relative w-9 h-5 rounded-full transition-colors ${
-                          metricCompare ? 'bg-red-600' : 'bg-zinc-700'
+                          metricCompare ? 'bg-emerald-600' : 'bg-zinc-700'
                         }`}
                       >
                         <div
@@ -1678,7 +1678,7 @@ export default function PainelSalao() {
 
                 {metricsLoading ? (
                   <div className="flex justify-center items-center py-16">
-                    <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : (
                   <>
@@ -1920,7 +1920,7 @@ export default function PainelSalao() {
                             onClick={() => toggleDay(ix)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
                               (config?.open_days || []).includes(ix) 
-                                ? 'bg-red-600 border-red-500 text-white' 
+                                ? 'bg-emerald-600 border-emerald-500 text-white' 
                                 : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
                             }`}
                           >
@@ -1956,7 +1956,7 @@ export default function PainelSalao() {
                         {(config?.closed_dates || []).map((dateStr: string) => (
                           <div key={dateStr} className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-sm text-zinc-300">
                             {format(parseISO(dateStr), "dd/MM/yyyy")}
-                            <button onClick={() => removeClosedDate(dateStr)} className="text-zinc-500 hover:text-red-500">
+                            <button onClick={() => removeClosedDate(dateStr)} className="text-zinc-500 hover:text-emerald-500">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
@@ -1964,7 +1964,7 @@ export default function PainelSalao() {
                       </div>
                     </div>
 
-                    <Button onClick={handleSaveConfig} disabled={isSavingConfig} className="w-full mt-4 bg-red-600 hover:bg-red-700">
+                    <Button onClick={handleSaveConfig} disabled={isSavingConfig} className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700">
                       {isSavingConfig ? 'Salvando...' : 'Guardar Configurações'}
                     </Button>
                   </CardContent>
@@ -1994,7 +1994,7 @@ export default function PainelSalao() {
 
                 {isClientsLoading ? (
                   <div className="flex justify-center items-center py-12">
-                     <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2159,3 +2159,4 @@ export default function PainelSalao() {
     </div>
   )
 }
+
