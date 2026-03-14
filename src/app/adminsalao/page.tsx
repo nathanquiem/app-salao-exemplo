@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import { LogOut, Plus, Settings, Users, Scissors, Trash2, Save, X, Clock, Calendar, Image as ImageIcon, CheckCircle, Info, Menu, MapPin, Edit, Phone, User as UserIcon, BarChart3, ArrowUpRight, TrendingUp, Smartphone, QrCode, Wifi, WifiOff, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { LogOut, Plus, Settings, Users, Scissors, Sparkles, Trash2, Save, X, Clock, Calendar, Image as ImageIcon, CheckCircle, Info, Menu, MapPin, Edit, Phone, User as UserIcon, BarChart3, ArrowUpRight, TrendingUp, Smartphone, QrCode, Wifi, WifiOff, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { format, parseISO, isAfter, subHours, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, subDays, eachDayOfInterval, eachMonthOfInterval, isSameDay, differenceInDays, isWithinInterval } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
@@ -21,6 +21,15 @@ export default function PainelSalao() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [supabase] = useState(() => createClient())
   const router = useRouter()
+
+  // Helper function for service icons
+  const getServiceIcon = (name: string, desc: string, className: string) => {
+    const text = `${name} ${desc}`.toLowerCase()
+    if (text.includes('unha') || text.includes('manicure') || text.includes('pedicure') || text.includes('esmaltação') || text.includes('alongamento')) {
+      return <Sparkles className={className} />
+    }
+    return <Scissors className={className} />
+  }
 
   // --- AGENDA STATE ---
   const [agendaFilter, setAgendaFilter] = useState<'today' | 'week' | 'future' | 'past'>('today')
@@ -1205,7 +1214,7 @@ export default function PainelSalao() {
                                   </h4>
                                   <div className="text-green-600 text-sm flex flex-col gap-1 mt-1">
                                     <span className="flex items-center gap-2">
-                                      <Scissors className="w-3 h-3" /> {booking.services?.name}
+                                      {getServiceIcon(booking.services?.name || '', booking.services?.description || '', 'w-3 h-3')} {booking.services?.name}
                                     </span>
                                     {booking.barbers?.name && (
                                       <span className="flex items-center gap-2 text-xs text-green-600">
@@ -1485,7 +1494,7 @@ export default function PainelSalao() {
                           <img src={service.image_url} alt={service.name} className="w-20 h-20 rounded-lg object-cover bg-white shrink-0" />
                         ) : (
                           <div className="w-20 h-20 rounded-lg bg-white flex items-center justify-center shrink-0">
-                            <Scissors className="w-8 h-8 text-zinc-700" />
+                            {getServiceIcon(service.name || '', service.description || '', 'w-8 h-8 text-zinc-700')}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">

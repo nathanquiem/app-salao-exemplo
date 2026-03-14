@@ -95,11 +95,11 @@ export default function LandingPage() {
       <header className="w-full border-b border-green-100 bg-white/95 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-800 rounded-full flex items-center justify-center shadow-md shadow-green-900/20">
-              <Scissors className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center">
+              <img src="https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/logo-banner/logo_salao.png" alt="Seu Salão" className="h-10 w-auto object-contain" />
             </div>
             <div className="flex flex-col pr-2">
-              <span className="font-bold text-[15px] sm:text-lg tracking-tight text-green-950 leading-none">Seu Salão</span>
+              <span className="font-bold text-[15px] sm:text-lg tracking-tight text-green-950 leading-none">Seu Salão Aqui</span>
               {isOpenNow !== null && (
                 <span className={`text-xs font-semibold mt-1 flex items-center justify-start gap-1.5 ${isOpenNow ? 'text-emerald-600' : 'text-red-500'}`}>
                   <span className="relative flex h-2 w-2">
@@ -135,14 +135,30 @@ export default function LandingPage() {
       {/* We apply a negative top margin to pull it behind the 80px static relative header, while adjusting min-heights */}
       <div className="w-full relative min-h-[100dvh] flex items-center justify-center overflow-hidden -mt-20">
         
-        {/* Mobile Background Image */}
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat sm:hidden" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz-mobile.jpg')" }}></div>
+        {/* Mobile Background Video */}
+        <video 
+          className="absolute inset-0 w-full h-full object-cover sm:hidden" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+        >
+          <source src="https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/logo-banner/home_salao_mobile.mp4" type="video/mp4" />
+        </video>
 
-        {/* Desktop Background Image */}
-        <div className="absolute inset-0 bg-cover bg-top bg-no-repeat hidden sm:block" style={{ backgroundImage: "url('https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/services/home-blz.jpg')" }}></div>
+        {/* Desktop Background Video */}
+        <video 
+          className="absolute inset-0 w-full h-full object-cover hidden sm:block" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+        >
+          <source src="https://gnjcdjhvekshzkwvwfdb.supabase.co/storage/v1/object/public/logo-banner/home_salao_desk.mp4" type="video/mp4" />
+        </video>
         
         {/* Gradient Overlay for Readability (Now active on BOTH mobile and desktop) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-green-950/60 via-green-900/50 to-green-950/90 mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-green-950/60 via-green-900/50 to-green-950/90 mix-blend-multiply pointer-events-none"></div>
 
         <main className="w-full max-w-6xl mx-auto px-4 relative z-10 flex flex-col justify-center items-center h-full pt-16 text-center scale-[1.05] sm:scale-110">
           <section className="flex flex-col items-center space-y-6 max-w-2xl">
@@ -188,44 +204,120 @@ export default function LandingPage() {
           <div className="w-20 h-1 bg-green-800 mt-4 rounded-full"></div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isLoading ? (
-            [1, 2, 3].map((i) => (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
               <div key={i} className="rounded-2xl border border-green-100 bg-green-50 p-5 flex flex-col animate-pulse">
                 <div className="w-full h-48 bg-green-200/60 rounded-xl mb-5"></div>
                 <div className="h-7 w-3/4 bg-green-200/60 rounded-lg mb-3"></div>
                 <div className="h-5 w-1/2 bg-green-200/60 rounded-lg mb-5"></div>
                 <div className="mt-auto h-12 w-full bg-green-200/60 rounded-xl"></div>
               </div>
-            ))
-          ) : services.length > 0 ? (
-            services.map((service) => (
-              <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
-                <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
-                  <img
-                    src={service.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"}
-                    alt={service.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-green-950 mb-2">{service.name}</h3>
-                {service.description && (
-                  <p className="text-sm text-green-700 mb-4 line-clamp-2">{service.description}</p>
-                )}
-                <div className="flex items-center justify-between mt-auto pt-4 border-t border-green-100">
-                  <span className="text-xl font-bold text-green-800">
-                    R$ {Number(service.price).toFixed(2).replace('.', ',')}
-                  </span>
-                  <span className="text-sm text-green-600 font-medium">{service.duration_minutes} min</span>
+            ))}
+          </div>
+        ) : services.length > 0 ? (
+          <div className="space-y-12">
+            {/* Hair Services */}
+            {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                  Cabelo
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).map((service) => (
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                      <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
+                        <img
+                          src={service.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <h3 className="text-xl font-bold text-green-950 mb-2">{service.name}</h3>
+                      {service.description && (
+                        <p className="text-sm text-green-700 mb-4 line-clamp-2">{service.description}</p>
+                      )}
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-green-100">
+                        <span className="text-xl font-bold text-green-800">
+                          R$ {Number(service.price).toFixed(2).replace('.', ',')}
+                        </span>
+                        <span className="text-sm text-green-600 font-medium">{service.duration_minutes} min</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center text-green-600 py-10">
-              Nenhum serviço disponível no momento.
-            </div>
-          )}
-        </div>
+            )}
+
+            {/* Nails Services */}
+            {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                  Unhas
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).map((service) => (
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                      <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
+                        <img
+                          src={service.image_url || "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?q=80&w=800&auto=format&fit=crop"}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <h3 className="text-xl font-bold text-green-950 mb-2">{service.name}</h3>
+                      {service.description && (
+                        <p className="text-sm text-green-700 mb-4 line-clamp-2">{service.description}</p>
+                      )}
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-green-100">
+                        <span className="text-xl font-bold text-green-800">
+                          R$ {Number(service.price).toFixed(2).replace('.', ',')}
+                        </span>
+                        <span className="text-sm text-green-600 font-medium">{service.duration_minutes} min</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other Services */}
+            {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                  Outros Serviços
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).map((service) => (
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                      <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
+                        <img
+                          src={service.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <h3 className="text-xl font-bold text-green-950 mb-2">{service.name}</h3>
+                      {service.description && (
+                        <p className="text-sm text-green-700 mb-4 line-clamp-2">{service.description}</p>
+                      )}
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-green-100">
+                        <span className="text-xl font-bold text-green-800">
+                          R$ {Number(service.price).toFixed(2).replace('.', ',')}
+                        </span>
+                        <span className="text-sm text-green-600 font-medium">{service.duration_minutes} min</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-full text-center text-green-600 py-10">
+            Nenhum serviço disponível no momento.
+          </div>
+        )}
       </section>
 
       {/* Location Section */}

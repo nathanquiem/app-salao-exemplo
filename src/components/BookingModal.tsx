@@ -6,8 +6,17 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { Label } from './ui/Label'
-import { X, Calendar, Clock, User } from 'lucide-react'
+import { X, Calendar, Clock, User, Scissors, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
+
+// Helper function to determine the appropriate icon
+const getServiceIcon = (name: string, desc: string) => {
+  const text = `${name} ${desc}`.toLowerCase()
+  if (text.includes('unha') || text.includes('manicure') || text.includes('pedicure') || text.includes('esmaltação') || text.includes('alongamento')) {
+    return <Sparkles className="w-5 h-5 text-green-600" />
+  }
+  return <Scissors className="w-5 h-5 text-green-600" />
+}
 
 interface BookingModalProps {
   isOpen: boolean
@@ -483,37 +492,127 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
                   </Button>
                 </div>
               ) : (
-                services.map((service) => (
-                  <div
-                    key={service.id}
-                    onClick={() => setSelectedService(service)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center gap-4 ${
-                      selectedService?.id === service.id
-                        ? 'border-green-700 bg-green-50'
-                        : 'border-green-100 bg-white hover:border-green-300 hover:bg-green-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      {service.image_url ? (
-                        <div className="w-12 h-12 rounded-lg bg-green-100 shrink-0 overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-green-100 shrink-0 flex items-center justify-center">
-                          <span className="text-green-500 text-[10px] uppercase">Sem img</span>
-                        </div>
-                      )}
-                      <div>
-                        <h4 className="font-medium text-green-950">{service.name}</h4>
-                        <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
-                          <Clock className="w-3 h-3" /> {service.duration_minutes} min
-                        </p>
+                <div className="space-y-6">
+                  {/* Cabelo */}
+                  {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-green-800 uppercase tracking-wider mb-3">Cabelo</h3>
+                      <div className="space-y-3">
+                        {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).map((service) => (
+                          <div
+                            key={service.id}
+                            onClick={() => setSelectedService(service)}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center gap-4 ${
+                              selectedService?.id === service.id
+                                ? 'border-green-700 bg-green-50'
+                                : 'border-green-100 bg-white hover:border-green-300 hover:bg-green-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4 flex-1">
+                              {service.image_url ? (
+                                <div className="w-12 h-12 rounded-lg bg-green-100 shrink-0 overflow-hidden">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-green-50 border border-green-100 shrink-0 flex items-center justify-center">
+                                  {getServiceIcon(service.name || '', service.description || '')}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-medium text-green-950">{service.name}</h4>
+                                <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                                  <Clock className="w-3 h-3" /> {service.duration_minutes} min
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-green-800 flex-shrink-0">R$ {service.price}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <span className="font-bold text-green-800">R$ {service.price}</span>
-                  </div>
-                ))
+                  )}
+
+                  {/* Unhas */}
+                  {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-green-800 uppercase tracking-wider mb-3">Unhas</h3>
+                      <div className="space-y-3">
+                        {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).map((service) => (
+                          <div
+                            key={service.id}
+                            onClick={() => setSelectedService(service)}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center gap-4 ${
+                              selectedService?.id === service.id
+                                ? 'border-green-700 bg-green-50'
+                                : 'border-green-100 bg-white hover:border-green-300 hover:bg-green-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4 flex-1">
+                              {service.image_url ? (
+                                <div className="w-12 h-12 rounded-lg bg-green-100 shrink-0 overflow-hidden">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-green-50 border border-green-100 shrink-0 flex items-center justify-center">
+                                  {getServiceIcon(service.name || '', service.description || '')}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-medium text-green-950">{service.name}</h4>
+                                <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                                  <Clock className="w-3 h-3" /> {service.duration_minutes} min
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-green-800 flex-shrink-0">R$ {service.price}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Outros Serviços */}
+                  {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-green-800 uppercase tracking-wider mb-3">Outros Serviços</h3>
+                      <div className="space-y-3">
+                        {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).map((service) => (
+                          <div
+                            key={service.id}
+                            onClick={() => setSelectedService(service)}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center gap-4 ${
+                              selectedService?.id === service.id
+                                ? 'border-green-700 bg-green-50'
+                                : 'border-green-100 bg-white hover:border-green-300 hover:bg-green-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4 flex-1">
+                              {service.image_url ? (
+                                <div className="w-12 h-12 rounded-lg bg-green-100 shrink-0 overflow-hidden">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-green-50 border border-green-100 shrink-0 flex items-center justify-center">
+                                  {getServiceIcon(service.name || '', service.description || '')}
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-medium text-green-950">{service.name}</h4>
+                                <p className="text-green-600 text-sm flex items-center gap-1 mt-1">
+                                  <Clock className="w-3 h-3" /> {service.duration_minutes} min
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-green-800 flex-shrink-0">R$ {service.price}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               <Button
