@@ -278,7 +278,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)
-      setError('Erro ao buscar barbeiros.')
+      setError('Erro ao buscar profissionals.')
     } finally {
       setBarbersLoading(false)
     }
@@ -295,7 +295,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
 
   const handleNextStep2 = () => {
     if (barbers.length > 0 && !selectedBarber) {
-      setError('Selecione um barbeiro primeiro.')
+      setError('Selecione um profissional primeiro.')
       return
     }
     setError('')
@@ -314,11 +314,11 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
       const selectedD = new Date(y, m - 1, d)
       const dayOfWeek = selectedD.getDay()
       if (config.open_days && !config.open_days.includes(dayOfWeek)) {
-        setError('A barbearia não abre neste dia da semana.')
+        setError('A salão não abre neste dia da semana.')
         return
       }
       if (config.closed_dates && config.closed_dates.includes(date)) {
-        setError('A barbearia estará fechada nesta data.')
+        setError('A salão estará fechada nesta data.')
         return
       }
     }
@@ -358,7 +358,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
           phone: profile.phone,
           clientName: profile?.full_name || 'Cliente',
           serviceName: selectedService.name,
-          barberName: selectedBarber ? selectedBarber.name : 'Barbeiro',
+          barberName: selectedBarber ? selectedBarber.name : 'Profissional',
           bookingDate: bookingDate.toLocaleDateString('pt-BR'),
           bookingTime: time
         }
@@ -385,15 +385,15 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
   const generateTimeSlots = () => {
     const slots = []
     let startHour = 9
-    let endHour = 19
     let startMin = 0
+    let closeTotalMinutes = 19 * 60
 
     if (config?.open_time && config?.close_time) {
        const [openH, openM] = config.open_time.split(':').map(Number)
        const [closeH, closeM] = config.close_time.split(':').map(Number)
        startHour = openH
-       endHour = closeH
        startMin = openM
+       closeTotalMinutes = closeH * 60 + closeM
     }
 
     let cursorH = startHour
@@ -403,12 +403,18 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
     const isToday = date === format(now, 'yyyy-MM-dd')
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes()
 
-    while (cursorH < endHour || (cursorH === endHour && cursorM === 0)) {
+    while (true) {
+      const slotTotalMinutes = cursorH * 60 + cursorM
+      
+      // Stop generating slots if slot can't finish by closing time (slot = 30 min)
+      if (slotTotalMinutes + 30 > closeTotalMinutes) {
+        break
+      }
+
       const slotStr = `${cursorH.toString().padStart(2, '0')}:${cursorM.toString().padStart(2, '0')}`
       
       let isValidSlot = true
       if (isToday) {
-        const slotTotalMinutes = cursorH * 60 + cursorM
         // Minimum 30 mins from now
         if (slotTotalMinutes < currentTotalMinutes + 30) {
           isValidSlot = false

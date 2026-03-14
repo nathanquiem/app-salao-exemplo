@@ -568,15 +568,15 @@ export default function PainelSalao() {
   const generateQuickTimeSlots = () => {
     const slots = []
     let startHour = 9
-    let endHour = 19
     let startMin = 0
+    let closeTotalMinutes = 19 * 60 // default → last slot 18:30
 
     if (config?.open_time && config?.close_time) {
        const [openH, openM] = config.open_time.split(':').map(Number)
        const [closeH, closeM] = config.close_time.split(':').map(Number)
        startHour = openH
-       endHour = closeH
        startMin = openM
+       closeTotalMinutes = closeH * 60 + closeM
     }
 
     let cursorH = startHour
@@ -586,12 +586,16 @@ export default function PainelSalao() {
     const isToday = quickDate === format(now, 'yyyy-MM-dd')
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes()
 
-    while (cursorH < endHour || (cursorH === endHour && cursorM === 0)) {
+    while (true) {
+      const slotTotalMinutes = cursorH * 60 + cursorM
+
+      // A slot is valid only if it finishes by closing time (each slot = 30 min)
+      if (slotTotalMinutes + 30 > closeTotalMinutes) break
+
       const slotStr = `${cursorH.toString().padStart(2, '0')}:${cursorM.toString().padStart(2, '0')}`
       
       let isValidSlot = true
       if (isToday) {
-        const slotTotalMinutes = cursorH * 60 + cursorM
         if (slotTotalMinutes < currentTotalMinutes + 30) {
           isValidSlot = false
         }
@@ -695,10 +699,37 @@ export default function PainelSalao() {
     
     const { data, count, error } = await query.range(from, to)
 
-    
     if (data && !error) {
-      if (pageIndex === 0) setClientsList(data)
-      else setClientsList(prev => [...prev, ...data])
+      // Fetch booking stats for these clients in one query
+      const clientIds = data.map((c: any) => c.id).filter(Boolean)
+      let statsMap: Record<string, { bookingCount: number; totalSpent: number }> = {}
+
+      if (clientIds.length > 0) {
+        const { data: bookingStats } = await supabase
+          .from('bookings')
+          .select('client_id, services(price)')
+          .in('client_id', clientIds)
+          .eq('status', 'confirmed')
+          .eq('empresa_id', empresaId || process.env.NEXT_PUBLIC_EMPRESA_ID!)
+
+        if (bookingStats) {
+          bookingStats.forEach((b: any) => {
+            if (!b.client_id) return
+            if (!statsMap[b.client_id]) statsMap[b.client_id] = { bookingCount: 0, totalSpent: 0 }
+            statsMap[b.client_id].bookingCount += 1
+            statsMap[b.client_id].totalSpent += Number(b.services?.price) || 0
+          })
+        }
+      }
+
+      const enriched = data.map((c: any) => ({
+        ...c,
+        bookingCount: statsMap[c.id]?.bookingCount || 0,
+        totalSpent: statsMap[c.id]?.totalSpent || 0,
+      }))
+
+      if (pageIndex === 0) setClientsList(enriched)
+      else setClientsList(prev => [...prev, ...enriched])
       
       setHasMoreClients(count !== null && count > to + 1)
     }
@@ -1058,7 +1089,7 @@ export default function PainelSalao() {
               <item.icon className="w-4 h-4 mr-3" /> {item.label}
             </Button>
           ))}
-          <Button variant="ghost" className="justify-start shadow-none text-zinc-500 hover:text-red-500 mt-auto" onClick={handleLogout}>
+          <Button variant="ghost" className="justify-start shadow-none text-green-600 hover:text-red-500 mt-auto" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-3" /> Sair
           </Button>
         </nav>
@@ -1069,13 +1100,13 @@ export default function PainelSalao() {
         {/* MOBILE HEADER */}
         <header className="border-b border-zinc-200 bg-white px-4 py-3 flex justify-between items-center md:hidden shrink-0 z-20 relative">
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-zinc-500 hover:text-zinc-900">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-green-600 hover:text-zinc-900">
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
             <h1 className="text-lg font-bold text-zinc-900"><span className="text-green-500">Painel</span>Salão</h1>
           </div>
           <Button variant="ghost" size="icon" onClick={handleLogout}>
-            <LogOut className="w-5 h-5 text-zinc-500" />
+            <LogOut className="w-5 h-5 text-green-600" />
           </Button>
         </header>
 
@@ -1099,16 +1130,16 @@ export default function PainelSalao() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-2xl font-bold">Gestão de Agenda</h2>
                   <div className="w-full sm:w-auto grid grid-cols-2 sm:flex bg-white border border-zinc-200 rounded-lg p-1 gap-1 sm:gap-0">
-                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'today' ? 'bg-zinc-800 text-zinc-900 shadow' : 'text-zinc-500 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('today')}>Hoje</button>
-                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'week' ? 'bg-zinc-800 text-zinc-900 shadow' : 'text-zinc-500 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('week')}>Semana</button>
-                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'future' ? 'bg-zinc-800 text-zinc-900 shadow' : 'text-zinc-500 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('future')}>Futuros</button>
-                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'past' ? 'bg-zinc-800 text-zinc-900 shadow' : 'text-zinc-500 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('past')}>Histórico</button>
+                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'today' ? 'bg-green-100 text-zinc-900 shadow' : 'text-green-600 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('today')}>Hoje</button>
+                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'week' ? 'bg-green-100 text-zinc-900 shadow' : 'text-green-600 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('week')}>Semana</button>
+                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'future' ? 'bg-green-100 text-zinc-900 shadow' : 'text-green-600 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('future')}>Futuros</button>
+                    <button className={`w-full text-center px-2 py-1.5 text-sm rounded-md font-medium transition-colors ${agendaFilter === 'past' ? 'bg-green-100 text-zinc-900 shadow' : 'text-green-600 hover:text-zinc-800'}`} onClick={() => setAgendaFilter('past')}>Histórico</button>
                   </div>
                 </div>
 
                 {agendaFilter === 'past' && (
                   <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                    <Label className="text-zinc-500 whitespace-nowrap">Selecione o Mês:</Label>
+                    <Label className="text-green-600 whitespace-nowrap">Selecione o Mês:</Label>
                     <select 
                       className="bg-white border border-zinc-200 text-zinc-900 text-sm rounded-lg px-3 py-2 w-48 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                       value={historyMonth}
@@ -1126,10 +1157,10 @@ export default function PainelSalao() {
                   </div>
                 )}
 
-                {isLoadingAgenda ? <p className="text-zinc-500">Carregando...</p> : agendaBookings.length === 0 ? (
+                {isLoadingAgenda ? <p className="text-green-600">Carregando...</p> : agendaBookings.length === 0 ? (
                   <div className="text-center py-12 border border-zinc-200 rounded-2xl bg-white/30">
-                    <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-                    <p className="text-zinc-500">Nenhum agendamento encontrado.</p>
+                    <Calendar className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-green-600">Nenhum agendamento encontrado.</p>
                   </div>
                 ) : (
                   <div className="grid gap-3">
@@ -1149,19 +1180,19 @@ export default function PainelSalao() {
                             <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                               <div className="flex items-center gap-4">
                                 <div className="bg-white rounded-lg p-3 text-center min-w-[80px]">
-                                  {agendaFilter !== 'today' && <p className="text-xs text-zinc-500 uppercase">{format(bDate, 'dd MMM')}</p>}
+                                  {agendaFilter !== 'today' && <p className="text-xs text-green-600 uppercase">{format(bDate, 'dd MMM')}</p>}
                                   <p className="text-xl font-bold text-zinc-900">{format(bDate, 'HH:mm')}</p>
                                 </div>
                                 <div>
                                   <h4 className="font-bold text-zinc-900 text-lg">
                                     {booking.guest_name ? booking.guest_name : (booking.profiles?.full_name || 'Desconhecido')}
                                   </h4>
-                                  <div className="text-zinc-500 text-sm flex flex-col gap-1 mt-1">
+                                  <div className="text-green-600 text-sm flex flex-col gap-1 mt-1">
                                     <span className="flex items-center gap-2">
                                       <Scissors className="w-3 h-3" /> {booking.services?.name}
                                     </span>
                                     {booking.barbers?.name && (
-                                      <span className="flex items-center gap-2 text-xs text-zinc-500">
+                                      <span className="flex items-center gap-2 text-xs text-green-600">
                                         <UserIcon className="w-3 h-3" /> {booking.barbers.name}
                                       </span>
                                     )}
@@ -1173,7 +1204,7 @@ export default function PainelSalao() {
                                   {isActive ? 'Confirmado' : 'Cancelado'}
                                 </span>
                                 {isActive && (
-                                  <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-red-500 hover:bg-red-500/10 h-8" onClick={(e) => handleCancelAgendaBooking(e, booking.id)}>
+                                  <Button variant="ghost" size="sm" className="text-green-600 hover:text-red-500 hover:bg-red-500/10 h-8" onClick={(e) => handleCancelAgendaBooking(e, booking.id)}>
                                     Cancelar
                                   </Button>
                                 )}
@@ -1187,26 +1218,26 @@ export default function PainelSalao() {
                               {selectedClientDetails ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                   <div>
-                                    <p className="text-xs text-zinc-500 mb-1">Telefone</p>
+                                    <p className="text-xs text-green-600 mb-1">Telefone</p>
                                     <p className="text-sm font-medium text-zinc-900 flex items-center gap-2">
-                                      <Phone className="w-3 h-3 text-zinc-500" /> {formatPhone(booking.guest_phone || booking.profiles?.phone) || 'Não informado'}
+                                      <Phone className="w-3 h-3 text-green-600" /> {formatPhone(booking.guest_phone || booking.profiles?.phone) || 'Não informado'}
                                     </p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-zinc-500 mb-1">Total de Cortes ({isActive ? 'Com este' : ''})</p>
+                                    <p className="text-xs text-green-600 mb-1">Total de Cortes ({isActive ? 'Com este' : ''})</p>
                                     <p className="text-sm font-medium text-zinc-900">{selectedClientDetails.totalCuts}</p>
                                   </div>
                                   <div>
-                                    <p className="text-xs text-zinc-500 mb-1">Total Gasto na Barbearia</p>
+                                    <p className="text-xs text-green-600 mb-1">Total Gasto na Salão</p>
                                     <p className="text-sm font-medium text-emerald-400">{selectedClientDetails.totalSpent}</p>
                                   </div>
                                   <div className="sm:col-span-3 pt-4 border-t border-zinc-200/50">
-                                    <p className="text-xs text-zinc-500 mb-1">Cliente desde</p>
+                                    <p className="text-xs text-green-600 mb-1">Cliente desde</p>
                                     <p className="text-sm font-medium text-zinc-900">{selectedClientDetails.registeredSince}</p>
                                   </div>
                                 </div>
                               ) : (
-                                <p className="text-sm text-zinc-500">Carregando detalhes do cliente...</p>
+                                <p className="text-sm text-green-600">Carregando detalhes do cliente...</p>
                               )}
                             </div>
                           )}
@@ -1231,14 +1262,14 @@ export default function PainelSalao() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold">Agendamento Manual</h2>
-                  <p className="text-zinc-500 text-sm">Para clientes que chegam sem horário no aplicativo (Balcão).</p>
+                  <p className="text-green-600 text-sm">Para clientes que chegam sem horário no aplicativo (Balcão).</p>
                 </div>
                 <Card className="border-zinc-200 bg-white/50">
                   <CardContent className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Nome do Cliente *</Label>
-                        <Input placeholder="Ex: Carlos" value={quickName} onChange={e => setQuickName(e.target.value)} className="bg-white border-zinc-200" />
+                        <Input placeholder="Ex: Maria" value={quickName} onChange={e => setQuickName(e.target.value)} className="bg-white border-zinc-200 text-green-950" />
                       </div>
                       <div className="space-y-2">
                         <Label>Telefone / WhatsApp (Opcional)</Label>
@@ -1275,7 +1306,7 @@ export default function PainelSalao() {
                     
                     <div className="space-y-4 pt-4 border-t border-zinc-200/50">
                       <div className="space-y-2 max-w-[200px]">
-                        <Label className="flex items-center gap-2"><Calendar className="w-4 h-4 text-zinc-500" /> Data *</Label>
+                        <Label className="flex items-center gap-2"><Calendar className="w-4 h-4 text-green-600" /> Data *</Label>
                         <Input 
                           type="date" 
                           min={format(new Date(), 'yyyy-MM-dd')} 
@@ -1283,7 +1314,7 @@ export default function PainelSalao() {
                           onChange={e => {
                             const val = e.target.value
                             if (config?.closed_dates?.includes(val)) {
-                              alert('A barbearia estará fechada nesta data.')
+                              alert('A salão estará fechada nesta data.')
                               setQuickDate('')
                               return
                             }
@@ -1291,7 +1322,7 @@ export default function PainelSalao() {
                                const [y, m, d] = val.split('-').map(Number)
                                const dayOfWeek = new Date(y, m - 1, d).getDay()
                                if (!config.open_days.includes(dayOfWeek)) {
-                                  alert('A barbearia não abre neste dia da semana.')
+                                  alert('A salão não abre neste dia da semana.')
                                   setQuickDate('')
                                   return
                                }
@@ -1302,8 +1333,8 @@ export default function PainelSalao() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Clock className="w-4 h-4 text-zinc-500" /> Horário *</Label>
-                        {!quickDate ? <p className="text-sm text-zinc-500 italic">Selecione uma data primeiro</p> : (
+                        <Label className="flex items-center gap-2"><Clock className="w-4 h-4 text-green-600" /> Horário *</Label>
+                        {!quickDate ? <p className="text-sm text-green-600 italic">Selecione uma data primeiro</p> : (
                           generateQuickTimeSlots().length === 0 ? (
                             <p className="text-sm text-red-500">Nenhum horário disponível para esta data hoje.</p>
                           ) : (
@@ -1318,10 +1349,10 @@ export default function PainelSalao() {
                                   disabled={isOccupied}
                                   className={`py-2 text-sm rounded-lg border transition-all ${
                                     isOccupied
-                                      ? 'bg-white border-zinc-900 text-zinc-600 cursor-not-allowed opacity-50 line-through'
+                                      ? 'bg-white border-green-100 text-green-500 cursor-not-allowed opacity-50 line-through'
                                       : quickTime === slot
-                                      ? 'bg-emerald-500 border-emerald-500 text-white font-medium'
-                                      : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                                      ? 'bg-emerald-500 border-emerald-500 text-green-950 font-medium'
+                                      : 'bg-white border-zinc-200 text-green-600 hover:border-zinc-300'
                                   }`}
                                 >
                                   {slot}
@@ -1334,7 +1365,7 @@ export default function PainelSalao() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleConfirmQuickBooking} disabled={isQuickBooking}>
+                    <Button className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-green-950" onClick={handleConfirmQuickBooking} disabled={isQuickBooking}>
                       {isQuickBooking ? 'Salvando...' : 'Confirmar Encaixe'}
                     </Button>
                   </CardContent>
@@ -1348,7 +1379,7 @@ export default function PainelSalao() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <h2 className="text-2xl font-bold">Serviços Oferecidos</h2>
-                    <p className="text-zinc-500 text-sm">Gerencie os cortes e os valores cobrados.</p>
+                    <p className="text-green-600 text-sm">Gerencie os cortes e os valores cobrados.</p>
                   </div>
                   {!isCreatingService && (
                     <Button onClick={() => { setIsCreatingService(true); setEditingServiceId(null); setServiceForm({name:'', price:'', duration:'', description:'', image_url:''}) }} className="bg-emerald-600 hover:bg-emerald-700 shrink-0">
@@ -1362,8 +1393,8 @@ export default function PainelSalao() {
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start">
                         <CardTitle>{editingServiceId ? 'Editar Serviço' : 'Novo Serviço'}</CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setIsCreatingService(false)} className="h-8 w-8 hover:bg-zinc-800">
-                          <X className="w-4 h-4 text-zinc-500" />
+                        <Button variant="ghost" size="icon" onClick={() => setIsCreatingService(false)} className="h-8 w-8 hover:bg-green-100">
+                          <X className="w-4 h-4 text-green-600" />
                         </Button>
                       </div>
                     </CardHeader>
@@ -1387,7 +1418,7 @@ export default function PainelSalao() {
                           <div className="space-y-2">
                             <Label>Descrição</Label>
                             <textarea 
-                              className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 min-h-[80px]"
+                              className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-green-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 min-h-[80px]"
                               value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})}
                               placeholder="Detalhes sobre o serviço..."
                             />
@@ -1413,7 +1444,7 @@ export default function PainelSalao() {
                                 <img src={serviceForm.image_url} alt="Current Preview" className="w-full h-full object-contain rounded-lg" />
                               </div>
                             ) : (
-                              <div className="text-center text-zinc-500">
+                              <div className="text-center text-green-600">
                                 <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                 <span className="text-sm">Clique para upload</span>
                               </div>
@@ -1422,7 +1453,7 @@ export default function PainelSalao() {
                         </div>
                       </div>
 
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveService} disabled={isSavingService}>
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-green-950" onClick={handleSaveService} disabled={isSavingService}>
                         {isSavingService ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Guardar Alterações</>}
                       </Button>
                     </CardContent>
@@ -1443,17 +1474,17 @@ export default function PainelSalao() {
                         )}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-zinc-900 truncate">{service.name}</h4>
-                          <p className="text-sm text-zinc-500 mt-1 line-clamp-1">{service.description || 'Sem descrição'}</p>
+                          <p className="text-sm text-green-600 mt-1 line-clamp-1">{service.description || 'Sem descrição'}</p>
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded text-xs">R$ {service.price}</span>
-                            <span className="text-xs text-zinc-500 flex items-center gap-1"><Clock className="w-3 h-3"/> {service.duration_minutes}m</span>
+                            <span className="text-xs text-green-600 flex items-center gap-1"><Clock className="w-3 h-3"/> {service.duration_minutes}m</span>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 bg-white" onClick={() => handleEditService(service)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-zinc-900 bg-white" onClick={() => handleEditService(service)}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-red-500 bg-white" onClick={() => handleDeleteService(service.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-red-500 bg-white" onClick={() => handleDeleteService(service.id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1470,7 +1501,7 @@ export default function PainelSalao() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <h2 className="text-2xl font-bold">Equipe de Profissionais</h2>
-                    <p className="text-zinc-500 text-sm">Gerencie os profissionais e os serviços que cada um realiza.</p>
+                    <p className="text-green-600 text-sm">Gerencie os profissionais e os serviços que cada um realiza.</p>
                   </div>
                   {!isCreatingBarber && (
                     <Button onClick={() => { setIsCreatingBarber(true); setEditingBarberId(null); setBarberForm({name:'', active:true, selectedServices:[], photo_url: ''}); setBarberImageFile(null) }} className="bg-emerald-600 hover:bg-emerald-700 shrink-0">
@@ -1484,8 +1515,8 @@ export default function PainelSalao() {
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start">
                         <CardTitle>{editingBarberId ? 'Editar Colaborador' : 'Adicionar Colaborador'}</CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setIsCreatingBarber(false)} className="h-8 w-8 hover:bg-zinc-800">
-                          <X className="w-4 h-4 text-zinc-500" />
+                        <Button variant="ghost" size="icon" onClick={() => setIsCreatingBarber(false)} className="h-8 w-8 hover:bg-green-100">
+                          <X className="w-4 h-4 text-green-600" />
                         </Button>
                       </div>
                     </CardHeader>
@@ -1514,7 +1545,7 @@ export default function PainelSalao() {
                                 <img src={barberForm.photo_url} alt="Barber Preview" className="h-full object-contain rounded-full" />
                               </div>
                             ) : (
-                              <div className="text-center text-zinc-500 flex flex-col items-center">
+                              <div className="text-center text-green-600 flex flex-col items-center">
                                 <ImageIcon className="w-4 h-4 mb-1 opacity-50" />
                                 <span className="text-xs">Upload de Foto</span>
                               </div>
@@ -1555,7 +1586,7 @@ export default function PainelSalao() {
                           ))}
                         </div>
                       </div>
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveBarber} disabled={isSavingBarber}>
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-green-950" onClick={handleSaveBarber} disabled={isSavingBarber}>
                         {isSavingBarber ? 'Salvando...' : 'Salvar Profissional'}
                       </Button>
                     </CardContent>
@@ -1572,7 +1603,7 @@ export default function PainelSalao() {
                             <img src={barber.photo_url} alt={barber.name} className="w-12 h-12 rounded-full object-cover border border-zinc-300 shrink-0" />
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-white border border-zinc-200 flex items-center justify-center shrink-0">
-                              <UserIcon className="w-6 h-6 text-zinc-500" />
+                              <UserIcon className="w-6 h-6 text-green-600" />
                             </div>
                           )}
                           <div>
@@ -1581,15 +1612,15 @@ export default function PainelSalao() {
                               <span className={`text-xs px-2 py-0.5 rounded-full ${barber.active !== false ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                                 {barber.active !== false ? 'Ativo' : 'Inativo'}
                               </span>
-                              <span className="text-xs bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">{barber.barber_services?.length || 0} Serviços</span>
+                              <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">{barber.barber_services?.length || 0} Serviços</span>
                             </div>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 shrink-0">
-                          <Button variant="ghost" size="icon" onClick={() => handleEditBarber(barber)} className="h-8 w-8 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-800">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditBarber(barber)} className="h-8 w-8 text-green-600 hover:text-zinc-900 hover:bg-green-100">
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteBarber(barber.id)} className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10">
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteBarber(barber.id)} className="h-8 w-8 text-green-600 hover:text-red-500 hover:bg-red-500/10">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1598,7 +1629,7 @@ export default function PainelSalao() {
                   ))}
                   {barbersList.length === 0 && !isCreatingBarber && (
                      <div className="col-span-full text-center p-8 border border-zinc-200 border-dashed rounded-xl">
-                       <p className="text-zinc-500">Nenhum Profissional cadastrado. Os agendamentos não exibirão escolha de profissional.</p>
+                       <p className="text-green-600">Nenhum Profissional cadastrado. Os agendamentos não exibirão escolha de profissional.</p>
                      </div>
                   )}
                 </div>
@@ -1614,7 +1645,7 @@ export default function PainelSalao() {
                     <h2 className="text-2xl font-bold flex items-center gap-2">
                       <BarChart3 className="w-6 h-6 text-emerald-500" /> Dashboard de Métricas
                     </h2>
-                    <p className="text-zinc-500 text-sm">Acompanhe o desempenho financeiro e os agendamentos.</p>
+                    <p className="text-green-600 text-sm">Acompanhe o desempenho financeiro e os agendamentos.</p>
                   </div>
 
                   {/* Date Preset Buttons */}
@@ -1631,8 +1662,8 @@ export default function PainelSalao() {
                         onClick={() => applyMetricPreset(p.key)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                           metricPreset === p.key
-                            ? 'bg-emerald-600 border-emerald-500 text-white'
-                            : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-400 hover:text-zinc-800'
+                            ? 'bg-emerald-600 border-emerald-500 text-green-950'
+                            : 'bg-white border-zinc-200 text-green-600 hover:border-zinc-400 hover:text-zinc-800'
                         }`}
                       >
                         {p.label}
@@ -1643,7 +1674,7 @@ export default function PainelSalao() {
                   {/* Custom Date Range + Compare Toggle */}
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-zinc-500">De:</label>
+                      <label className="text-xs text-green-600">De:</label>
                       <input
                         type="date"
                         value={metricDateStart}
@@ -1652,7 +1683,7 @@ export default function PainelSalao() {
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-zinc-500">Até:</label>
+                      <label className="text-xs text-green-600">Até:</label>
                       <input
                         type="date"
                         value={metricDateEnd}
@@ -1661,7 +1692,7 @@ export default function PainelSalao() {
                       />
                     </div>
                     <label className="flex items-center gap-2 ml-auto cursor-pointer select-none">
-                      <span className="text-xs text-zinc-500">Comparar período anterior</span>
+                      <span className="text-xs text-green-600">Comparar período anterior</span>
                       <div
                         onClick={() => setMetricCompare(!metricCompare)}
                         className={`relative w-9 h-5 rounded-full transition-colors ${
@@ -1688,7 +1719,7 @@ export default function PainelSalao() {
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                       {/* Revenue */}
                       <Card className="border-zinc-200 bg-white p-5 col-span-2 lg:col-span-1">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider">Receita</p>
+                        <p className="text-xs text-green-600 uppercase tracking-wider">Receita</p>
                         <h3 className="text-2xl font-bold text-zinc-900 mt-1">
                           R$ {(metricsData.summary.totalRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </h3>
@@ -1704,7 +1735,7 @@ export default function PainelSalao() {
 
                       {/* Bookings */}
                       <Card className="border-zinc-200 bg-white p-5">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider">Agendamentos</p>
+                        <p className="text-xs text-green-600 uppercase tracking-wider">Agendamentos</p>
                         <h3 className="text-2xl font-bold text-zinc-900 mt-1">{metricsData.summary.totalBookings || 0}</h3>
                         {metricCompare && (
                           <div className={`inline-flex items-center gap-1 text-xs font-medium mt-2 px-1.5 py-0.5 rounded ${
@@ -1718,7 +1749,7 @@ export default function PainelSalao() {
 
                       {/* Ticket Médio */}
                       <Card className="border-zinc-200 bg-white p-5">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider">Ticket Médio</p>
+                        <p className="text-xs text-green-600 uppercase tracking-wider">Ticket Médio</p>
                         <h3 className="text-2xl font-bold text-emerald-400 mt-1">
                           R$ {(metricsData.summary.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </h3>
@@ -1734,7 +1765,7 @@ export default function PainelSalao() {
 
                       {/* Cancelamento */}
                       <Card className="border-zinc-200 bg-white p-5">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider">Cancelamentos</p>
+                        <p className="text-xs text-green-600 uppercase tracking-wider">Cancelamentos</p>
                         <h3 className="text-2xl font-bold text-orange-400 mt-1">
                           {(metricsData.summary.cancelRate || 0).toFixed(1)}%
                         </h3>
@@ -1750,11 +1781,11 @@ export default function PainelSalao() {
 
                       {/* Top Serviço */}
                       <Card className="border-zinc-200 bg-white p-5">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider">Top Serviço</p>
+                        <p className="text-xs text-green-600 uppercase tracking-wider">Top Serviço</p>
                         <h3 className="text-lg font-bold text-zinc-900 mt-1 truncate" title={metricsData.summary.topService}>
                           {metricsData.summary.topService || 'N/A'}
                         </h3>
-                        <p className="text-xs text-zinc-500 mt-2">Mais agendado</p>
+                        <p className="text-xs text-green-600 mt-2">Mais agendado</p>
                       </Card>
                     </div>
 
@@ -1880,7 +1911,7 @@ export default function PainelSalao() {
               <div className="space-y-6 max-w-2xl">
                 <div>
                   <h2 className="text-2xl font-bold">Configurações do Negócio</h2>
-                  <p className="text-zinc-500 text-sm">Defina os horários e informações globais do sistema.</p>
+                  <p className="text-green-600 text-sm">Defina os horários e informações globais do sistema.</p>
                 </div>
                 
                 <Card className="border-zinc-200 bg-white">
@@ -1892,17 +1923,17 @@ export default function PainelSalao() {
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label>Abertura (HH:MM)</Label>
-                        <Input type="time" value={config?.open_time || '09:00'} onChange={e => setConfig({...config, open_time: e.target.value})} className="bg-white border-zinc-200" />
+                        <Input type="time" value={config?.open_time || '09:00'} onChange={e => setConfig({...config, open_time: e.target.value})} className="bg-white border-zinc-200 text-green-950" />
                       </div>
                       <div className="space-y-2">
                         <Label>Fechamento (HH:MM)</Label>
-                        <Input type="time" value={config?.close_time || '19:00'} onChange={e => setConfig({...config, close_time: e.target.value})} className="bg-white border-zinc-200" />
+                        <Input type="time" value={config?.close_time || '19:00'} onChange={e => setConfig({...config, close_time: e.target.value})} className="bg-white border-zinc-200 text-green-950" />
                       </div>
                     </div>
 
                     <div className="space-y-2 border-t border-zinc-200/50 pt-6">
                       <Label>Limite para Cancelamento (horas)</Label>
-                      <p className="text-zinc-500 text-xs">Quantas horas antes do horário agendado o cliente ainda pode cancelar.</p>
+                      <p className="text-green-600 text-xs">Quantas horas antes do horário agendado o cliente ainda pode cancelar.</p>
                       <Input 
                         type="number" 
                         min="0" 
@@ -1923,7 +1954,7 @@ export default function PainelSalao() {
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
                               (config?.open_days || []).includes(ix) 
                                 ? 'bg-emerald-600 border-emerald-500 text-white' 
-                                : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                                : 'bg-white border-zinc-200 text-green-600 hover:border-zinc-300'
                             }`}
                           >
                             {day}
@@ -1934,7 +1965,7 @@ export default function PainelSalao() {
 
                     <div className="space-y-3 border-t border-zinc-200/50 pt-6">
                       <Label>Exceções (Dias Fechados)</Label>
-                      <CardDescription>Adicione datas específicas onde a barbearia estará de folga/fechada, e horários não serão gerados.</CardDescription>
+                      <CardDescription>Adicione datas específicas onde o salão estará de folga/fechado, e horários não serão gerados.</CardDescription>
                       <div className="flex gap-2">
                         <Input 
                           type="date" 
@@ -1944,7 +1975,7 @@ export default function PainelSalao() {
                         />
                         <Button 
                           type="button" 
-                          className="bg-zinc-800 hover:bg-zinc-700" 
+                          className="bg-green-100 hover:bg-zinc-700" 
                           onClick={() => {
                             const input = document.getElementById('new-closed-date') as HTMLInputElement
                             addClosedDate(input.value)
@@ -1956,9 +1987,9 @@ export default function PainelSalao() {
                       </div>
                       <div className="flex flex-wrap gap-2 mt-3">
                         {(config?.closed_dates || []).map((dateStr: string) => (
-                          <div key={dateStr} className="flex items-center gap-2 bg-white border border-zinc-200 px-3 py-1.5 rounded-lg text-sm text-zinc-600">
+                          <div key={dateStr} className="flex items-center gap-2 bg-white border border-zinc-200 px-3 py-1.5 rounded-lg text-sm text-green-500">
                             {format(parseISO(dateStr), "dd/MM/yyyy")}
-                            <button onClick={() => removeClosedDate(dateStr)} className="text-zinc-500 hover:text-emerald-500">
+                            <button onClick={() => removeClosedDate(dateStr)} className="text-green-600 hover:text-emerald-500">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
@@ -1980,7 +2011,7 @@ export default function PainelSalao() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">Base de Clientes</h2>
-                    <p className="text-zinc-500 text-sm">Gerencie todos os clientes cadastrados na plataforma.</p>
+                    <p className="text-green-600 text-sm">Gerencie todos os clientes cadastrados na plataforma.</p>
                   </div>
                 </div>
 
@@ -2005,17 +2036,25 @@ export default function PainelSalao() {
                         <Card key={client.id} className="border-zinc-200 bg-white p-5 hover:bg-white/80 transition-colors">
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-full bg-white border border-zinc-200 flex items-center justify-center shrink-0">
-                               <UserIcon className="w-6 h-6 text-zinc-500" />
+                               <UserIcon className="w-6 h-6 text-green-600" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-zinc-900 text-lg truncate capitalize">{client.full_name || 'Desconhecido'}</h4>
-                              <p className="text-sm text-zinc-500 mt-1 truncate">{client.email}</p>
+                              <p className="text-sm text-green-600 mt-1 truncate">{client.email}</p>
                               {client.phone && (
-                                <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1">
+                                <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
                                   <Phone className="w-3 h-3 text-emerald-500" /> {formatPhone(client.phone)}
                                 </p>
                               )}
-                              <p className="text-[10px] text-zinc-600 mt-2">
+                              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                                  {client.bookingCount || 0} agendamento{(client.bookingCount || 0) !== 1 ? 's' : ''}
+                                </span>
+                                <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
+                                  R$ {(client.totalSpent || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-green-500 mt-2">
                                 Associado em {client.created_at ? format(parseISO(client.created_at), 'MMM yyyy') : 'N/A'}
                               </p>
                             </div>
@@ -2025,7 +2064,7 @@ export default function PainelSalao() {
                     })}
                     {clientsList.length === 0 && (
                       <div className="col-span-full text-center p-8 border border-zinc-200 border-dashed rounded-xl">
-                        <p className="text-zinc-500">Nenhum cliente cadastrado.</p>
+                        <p className="text-green-600">Nenhum cliente cadastrado.</p>
                       </div>
                     )}
                   </div>
@@ -2050,17 +2089,17 @@ export default function PainelSalao() {
                   <div className="flex items-center gap-4 flex-wrap">
                     {waLastUpdated && (
                       <>
-                        <span className="text-zinc-500 text-sm">
+                        <span className="text-green-600 text-sm">
                           {format(waLastUpdated, "dd/MM/yyyy '•' HH:mm:ss")}
                         </span>
-                        <span className="text-zinc-500 text-sm">{getWaTimeSinceUpdate()}</span>
+                        <span className="text-green-600 text-sm">{getWaTimeSinceUpdate()}</span>
                       </>
                     )}
                     <Button
                       onClick={handleWaFetchInstances}
                       disabled={waLoading === 'fetch'}
                       variant="outline"
-                      className="border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-800 gap-2"
+                      className="border-zinc-300 bg-white text-zinc-900 hover:bg-green-100 gap-2"
                     >
                       <RefreshCw className={`w-4 h-4 ${waLoading === 'fetch' ? 'animate-spin' : ''}`} />
                       Atualizar
@@ -2087,8 +2126,8 @@ export default function PainelSalao() {
                 {/* Empty State */}
                 {!waLoading && waInstances.length === 0 && !waError && waLastUpdated && (
                   <div className="text-center py-16 border border-zinc-200 rounded-2xl bg-white/30">
-                    <Smartphone className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-                    <p className="text-zinc-500">Nenhuma instância encontrada.</p>
+                    <Smartphone className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <p className="text-green-600">Nenhuma instância encontrada.</p>
                   </div>
                 )}
 
@@ -2140,7 +2179,7 @@ export default function PainelSalao() {
                   <Card className="border-zinc-200 bg-white/50">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-zinc-900 text-lg text-center">Escaneie o QR Code</CardTitle>
-                      <CardDescription className="text-zinc-500 text-center text-sm">Abra o WhatsApp → Menu (⋮) → Aparelhos conectados → Conectar aparelho</CardDescription>
+                      <CardDescription className="text-green-600 text-center text-sm">Abra o WhatsApp → Menu (⋮) → Aparelhos conectados → Conectar aparelho</CardDescription>
                     </CardHeader>
                     <CardContent className="flex justify-center pb-8">
                       <div className="bg-white rounded-2xl p-4 shadow-lg shadow-emerald-500/10">
