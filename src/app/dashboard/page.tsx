@@ -242,7 +242,7 @@ export default function DashboardPage() {
         onClose={() => setIsBookingModalOpen(false)}
         onSuccess={() => window.location.reload()}
         userId={user.id}
-        empresaId={profile?.empresa_id || EMPRESA_ID}
+        empresaId={EMPRESA_ID}
       />
 
       {isSettingsOpen && (

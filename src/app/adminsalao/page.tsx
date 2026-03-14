@@ -450,7 +450,7 @@ export default function PainelSalao() {
 
   // --- CONFIG LOGIC ---
   const fetchConfig = async () => {
-    const empresaId = profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!
+    const empresaId = process.env.NEXT_PUBLIC_EMPRESA_ID!
     const { data } = await supabase
       .from('business_config_salao')
       .select('*')
@@ -693,12 +693,10 @@ export default function PainelSalao() {
     setIsClientsLoading(pageIndex === 0)
     const from = pageIndex * 50
     const to = from + 49
-    const empresaId = profile?.empresa_id
-    
+        
     let query = supabase.from('profiles_salao').select('*', { count: 'exact' }).order('full_name', { ascending: true })
     
-    if (empresaId) query = query
-    if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+        if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
     
     const { data, count, error } = await query.range(from, to)
 
@@ -937,7 +935,7 @@ export default function PainelSalao() {
   // --- WHATSAPP LOGIC ---
   // Helper: get WhatsApp config directly from DB (avoids race with config state)
   const getWaConfig = async () => {
-    const empresaId = profile?.empresa_id || "7e2d9b4f-c1a6-4f83-d0e5-2b8a5f7c3e1d"
+    
     const { data } = await supabase
       .from('business_config_salao')
       .select('evolution_instance_id, apikey_id')
