@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
@@ -35,33 +35,22 @@ export default function LandingPage() {
 
   useEffect(() => {
     async function fetchData() {
-      // 1. Gate: check if empresa is active
-      const { data: empresa } = await supabase
-        .from('empresas')
-        .select('ativo')
-        .eq('id', EMPRESA_ID)
-        .single()
 
-      if (empresa && !empresa.ativo) {
-        setIsInactive(true)
-        setIsLoading(false)
-        return
-      }
 
       // 2. Fetch business config scoped to this empresa
       const { data: configData } = await supabase
-        .from('business_config')
+        .from('business_config_salao')
         .select('*')
-        .eq('empresa_id', EMPRESA_ID)
+        
         .limit(1)
         .single()
 
       if (configData) {
         checkIfOpen(configData)
         const { data: svcData } = await supabase
-          .from('services')
+          .from('services_salao')
           .select('*')
-          .eq('empresa_id', EMPRESA_ID)
+          
           .order('name')
         if (svcData) setServices(svcData)
       }

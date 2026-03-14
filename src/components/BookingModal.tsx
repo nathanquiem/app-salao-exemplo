@@ -116,9 +116,8 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
   const fetchConfig = async () => {
     try {
       const { data } = await supabase
-        .from('business_config')
+        .from('business_config_salao')
         .select('*')
-        .eq('empresa_id', empresaId)
         .limit(1)
         .single()
       if (data) setConfig(data)
@@ -137,7 +136,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
     const endOfDay = new Date(year, month - 1, day, 23, 59, 59).toISOString()
 
     let query = supabase
-      .from('bookings')
+      .from('bookings_salao')
       .select('start_time, service_id, barber_id')
       .gte('start_time', startOfDay)
       .lte('start_time', endOfDay)
@@ -161,7 +160,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
 
     if (serviceIds.length > 0) {
       const { data: svcData } = await supabase
-        .from('services')
+        .from('services_salao')
         .select('id, duration_minutes')
         .in('id', serviceIds)
 
@@ -201,21 +200,19 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
     try {
       // 1. Fetch allowed services (those with at least 1 active barber)
       const { data: activeBarbers } = await supabase
-        .from('barbers')
-        .select('id, barber_services(service_id)')
+        .from('barbers_salao')
+        .select('id, barber_services_salao(service_id)')
         .eq('active', true)
-        .eq('empresa_id', empresaId)
         
       const allowedServiceIds = new Set<string>()
       activeBarbers?.forEach((b: any) => {
-        b.barber_services?.forEach((bs: any) => allowedServiceIds.add(bs.service_id))
+        b.barber_services_salao?.forEach((bs: any) => allowedServiceIds.add(bs.service_id))
       })
 
       // 2. Fetch services
       const { data, error } = await supabase
-        .from('services')
+        .from('services_salao')
         .select('id, name, price, duration_minutes, image_url')
-        .eq('empresa_id', empresaId)
         .order('name')
 
       if (error) {
@@ -223,9 +220,8 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
           console.warn('Transient Supabase lock on services fetch — will retry.')
           await new Promise(r => setTimeout(r, 500))
           const retry = await supabase
-            .from('services')
+            .from('services_salao')
             .select('id, name, price, duration_minutes, image_url')
-            .eq('empresa_id', empresaId)
             .order('name')
           if (retry.data) {
              setServices(retry.data.filter((s: { id: string }) => allowedServiceIds.has(s.id)))
@@ -256,16 +252,15 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
     setError('')
     try {
       const { data, error } = await supabase
-        .from('barbers')
+        .from('barbers_salao')
         .select(`
           id, 
           name, 
           photo_url, 
-          barber_services!inner(service_id)
+          barber_services_salao!inner(service_id)
         `)
         .eq('active', true)
-        .eq('empresa_id', empresaId)
-        .eq('barber_services.service_id', serviceId)
+        .eq('barber_services_salao.service_id', serviceId)
       
       if (error) throw error
 
@@ -343,14 +338,14 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
       const endTime = new Date(bookingDate.getTime() + (selectedService.duration_minutes || 30) * 60000)
 
       const { data: newBooking, error: bookingError } = await supabase
-        .from('bookings')
+        .from('bookings_salao')
         .insert({
           client_id: userId,
           service_id: selectedService.id,
           barber_id: selectedBarber ? selectedBarber.id : null,
           start_time: bookingDate.toISOString(),
           end_time: endTime.toISOString(),
-          empresa_id: empresaId,
+          
           status: 'confirmed',
           guest_name: profile?.full_name || null,
           guest_phone: profile?.phone || null,

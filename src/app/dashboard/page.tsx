@@ -43,16 +43,16 @@ export default function DashboardPage() {
       if (authLoading || !user) return
       try {
         if (!profile) {
-          const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+          const { data: prof } = await supabase.from('profiles_salao').select('*').eq('id', user.id).maybeSingle()
           if (prof) setProfile(prof)
         }
         const { data: config } = await supabase
-          .from('business_config').select('cancel_limit_hours').limit(1).maybeSingle()
+          .from('business_config_salao').select('cancel_limit_hours').limit(1).maybeSingle()
         if (config) setCancelLimit(config.cancel_limit_hours)
 
         const { data: userBookings } = await supabase
-          .from('bookings')
-          .select(`*, services (name, duration_minutes, price), barbers (name)`)
+          .from('bookings_salao')
+          .select(`*, services_salao (name, duration_minutes, price), barbers_salao (name)`)
           .eq('client_id', user.id)
           .order('start_time', { ascending: true })
         if (userBookings) setBookings(userBookings)
@@ -73,7 +73,7 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return
     try {
-      const { error } = await supabase.from('bookings').update({ status: 'canceled' }).eq('id', bookingId)
+      const { error } = await supabase.from('bookings_salao').update({ status: 'canceled' }).eq('id', bookingId)
       if (error) throw error
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'canceled' } : b))
       alert("Agendamento cancelado com sucesso.")
@@ -163,16 +163,16 @@ export default function DashboardPage() {
                 <Card key={booking.id} className="border-green-100 shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex justify-between items-start text-green-950">
-                      <span>{booking.services?.name}</span>
-                      <span className="text-green-800 font-bold">R$ {booking.services?.price}</span>
+                      <span>{booking.services_salao?.name || 'Serviço'}</span>
+                      <span className="text-green-800 font-bold">R$ {booking.services_salao?.price || '—'}</span>
                     </CardTitle>
                     <CardDescription className="flex items-center gap-4 text-green-600">
                       <span className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" /> {booking.services?.duration_minutes} minutos
+                        <Clock className="w-4 h-4" /> {booking.services_salao?.duration_minutes} minutos
                       </span>
-                      {booking.barbers?.name && (
+                      {booking.barbers_salao?.name && (
                         <span className="flex items-center gap-2">
-                          <UserIcon className="w-4 h-4" /> {booking.barbers.name}
+                          <UserIcon className="w-4 h-4" /> {booking.barbers_salao.name}
                         </span>
                       )}
                     </CardDescription>
@@ -216,7 +216,7 @@ export default function DashboardPage() {
               pastBookings.map(booking => (
                 <div key={booking.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-green-100 bg-green-50 gap-4">
                   <div>
-                    <p className="font-medium text-green-900">{booking.services?.name}</p>
+                    <p className="font-medium text-green-900">{booking.services_salao?.name || 'Serviço'}</p>
                     <p className="text-sm text-green-600">
                       {format(parseISO(booking.start_time), "dd/MM/yyyy 'às' HH:mm")}
                     </p>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 onClick={async () => {
                   setEditLoading(true)
                   const { error } = await supabase
-                    .from('profiles')
+                    .from('profiles_salao')
                     .update({ full_name: editName, phone: editPhone })
                     .eq('id', user.id)
                   if (!error) {
