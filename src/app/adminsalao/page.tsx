@@ -744,11 +744,12 @@ export default function PainelSalao() {
 
   // --- METRICS LOGIC ---
   const [metricsLoading, setMetricsLoading] = useState(false)
-  const [metricsData, setMetricsData] = useState<any>({ daily: [], monthly: [], topServices: [], summary: {}, compSummary: {} })
+  const [metricsData, setMetricsData] = useState<any>({ daily: [], monthly: [], topServices: [], barberMetrics: [], serviceTable: [], summary: {}, compSummary: {} })
   const [metricDateStart, setMetricDateStart] = useState(() => format(startOfMonth(new Date()), 'yyyy-MM-dd'))
   const [metricDateEnd, setMetricDateEnd] = useState(() => format(new Date(), 'yyyy-MM-dd'))
   const [metricCompare, setMetricCompare] = useState(true)
   const [metricPreset, setMetricPreset] = useState<string>('month')
+  const [hiddenBarbers, setHiddenBarbers] = useState<string[]>([])
 
   const applyMetricPreset = (preset: string) => {
     const now = new Date()
@@ -803,7 +804,7 @@ export default function PainelSalao() {
 
       const { data: allBookings, error } = await supabase
         .from('bookings')
-        .select('start_time, status, service_id, services(name, price)')
+        .select('start_time, status, service_id, barber_id, services(name, price), barbers(name)')
         .gte('start_time', fetchStart.toISOString())
         .lte('start_time', rangeEnd.toISOString())
         .eq('empresa_id', profile?.empresa_id || process.env.NEXT_PUBLIC_EMPRESA_ID!)
@@ -842,7 +843,7 @@ export default function PainelSalao() {
 
       const pct = (curr: number, prev: number) => prev > 0 ? ((curr - prev) / prev * 100) : (curr > 0 ? 100 : 0)
 
-      // Top services
+      // Top services + full service table
       const svcMap: Record<string, { name: string; count: number; revenue: number }> = {}
       confirmed.forEach((b: any) => {
         const key = b.service_id || 'unknown'
@@ -850,12 +851,25 @@ export default function PainelSalao() {
         svcMap[key].count++
         svcMap[key].revenue += Number(b.services?.price) || 0
       })
-      const topServices = Object.values(svcMap)
-        .sort((a, b) => b.revenue - a.revenue)
+      const allServices = Object.values(svcMap).sort((a, b) => b.revenue - a.revenue)
+      const topServices = allServices
         .slice(0, 6)
         .map(s => ({ name: s.name, Receita: s.revenue, Agendamentos: s.count }))
+      const serviceTable = allServices.map(s => ({ name: s.name, count: s.count, revenue: s.revenue }))
 
       const topServiceName = topServices.length > 0 ? topServices[0].name : 'N/A'
+
+      // Per-barber metrics
+      const barberMap: Record<string, { name: string; count: number; revenue: number }> = {}
+      confirmed.forEach((b: any) => {
+        const key = b.barber_id || 'sem_profissional'
+        const name = b.barbers?.name || 'Sem profissional'
+        if (!barberMap[key]) barberMap[key] = { name, count: 0, revenue: 0 }
+        barberMap[key].count++
+        barberMap[key].revenue += Number(b.services?.price) || 0
+      })
+      const barberMetrics = Object.entries(barberMap).map(([id, v]) => ({ id, name: v.name, count: v.count, revenue: v.revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
 
       // Daily chart data (current period)
       const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd })
@@ -890,6 +904,8 @@ export default function PainelSalao() {
         daily: dailyData,
         monthly: monthlyData,
         topServices,
+        serviceTable,
+        barberMetrics,
         summary: {
           totalRevenue: totalRev,
           totalBookings: totalBookingsCount,
@@ -1329,7 +1345,7 @@ export default function PainelSalao() {
                             }
                             setQuickDate(val)
                           }} 
-                          className="bg-white border-zinc-200" 
+                          className="bg-white border-zinc-200 text-zinc-900" 
                         />
                       </div>
                       <div className="space-y-2">
@@ -1403,16 +1419,16 @@ export default function PainelSalao() {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label>Nome do Serviço</Label>
-                            <Input value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} className="bg-white border-zinc-200" />
+                            <Input value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} className="bg-white border-zinc-200 text-zinc-900" />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label>Preço (R$)</Label>
-                              <Input type="number" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} className="bg-white border-zinc-200" />
+                              <Input type="number" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} className="bg-white border-zinc-200 text-zinc-900" />
                             </div>
                             <div className="space-y-2">
                               <Label>Duração (Minutos)</Label>
-                              <Input type="number" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} className="bg-white border-zinc-200" />
+                              <Input type="number" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} className="bg-white border-zinc-200 text-zinc-900" />
                             </div>
                           </div>
                           <div className="space-y-2">
@@ -1453,7 +1469,7 @@ export default function PainelSalao() {
                         </div>
                       </div>
 
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-green-950" onClick={handleSaveService} disabled={isSavingService}>
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveService} disabled={isSavingService}>
                         {isSavingService ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Guardar Alterações</>}
                       </Button>
                     </CardContent>
@@ -1524,7 +1540,7 @@ export default function PainelSalao() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label>Nome do Profissional</Label>
-                          <Input value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} className="bg-white border-zinc-200" placeholder="Ex: João Ferreira" />
+                          <Input value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} className="bg-white border-zinc-200 text-zinc-900" placeholder="Ex: João Ferreira" />
                         </div>
                         
                         <div className="space-y-2">
@@ -1662,7 +1678,7 @@ export default function PainelSalao() {
                         onClick={() => applyMetricPreset(p.key)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                           metricPreset === p.key
-                            ? 'bg-emerald-600 border-emerald-500 text-green-950'
+                            ? 'bg-emerald-600 border-emerald-500 text-white'
                             : 'bg-white border-zinc-200 text-green-600 hover:border-zinc-400 hover:text-zinc-800'
                         }`}
                       >
@@ -1901,6 +1917,113 @@ export default function PainelSalao() {
                         </Card>
                       )}
                     </div>
+
+                    {/* Row 4: Service Table + Barber Metrics */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                      {/* Service Earnings Table */}
+                      <Card className="border-zinc-200 bg-white">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">Receita por Serviço (Detalhado)</CardTitle>
+                          <CardDescription>Detalhamento de ganhos por tipo de serviço</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto text-sm">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="border-b border-zinc-200 text-green-600">
+                                  <th className="py-2 px-3 font-medium">Serviço</th>
+                                  <th className="py-2 px-3 font-medium text-right">Qtd</th>
+                                  <th className="py-2 px-3 font-medium text-right">Receita</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {metricsData.serviceTable?.map((s: any, i: number) => (
+                                  <tr key={i} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/50">
+                                    <td className="py-2 px-3 text-zinc-900 font-medium truncate max-w-[150px]">{s.name}</td>
+                                    <td className="py-2 px-3 text-zinc-700 text-right">{s.count}</td>
+                                    <td className="py-2 px-3 text-emerald-600 font-semibold text-right">
+                                      R$ {Number(s.revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+                                  </tr>
+                                ))}
+                                {(!metricsData.serviceTable || metricsData.serviceTable.length === 0) && (
+                                  <tr>
+                                    <td colSpan={3} className="py-4 text-center text-zinc-500 italic text-xs">Nenhum dado no período</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Barber Metrics */}
+                      <Card className="border-zinc-200 bg-white flex flex-col">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <CardTitle className="text-base">Desempenho por Profissional</CardTitle>
+                              <CardDescription>Receita e agendamentos por colaborador</CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="flex-1">
+                          <div className="space-y-4">
+                            {metricsData.barberMetrics?.filter((b: any) => !hiddenBarbers.includes(b.id)).map((b: any) => {
+                              const maxRev = metricsData.barberMetrics[0]?.revenue || 1
+                              const pct = Math.max(2, (b.revenue / maxRev) * 100)
+                              return (
+                                <div key={b.id} className="group relative">
+                                  <div className="flex justify-between items-end mb-1">
+                                    <span className="text-sm font-medium text-zinc-900">{b.name}</span>
+                                    <div className="text-right">
+                                      <span className="text-sm font-bold text-emerald-600">
+                                        R$ {Number(b.revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      </span>
+                                      <span className="text-xs text-zinc-500 ml-2">({b.count} agend.)</span>
+                                    </div>
+                                  </div>
+                                  <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => setHiddenBarbers(prev => [...prev, b.id])}
+                                    className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-red-500 transition-all"
+                                    title="Ocultar profissional"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )
+                            })}
+
+                            {hiddenBarbers.length > 0 && (
+                              <div className="pt-4 mt-4 border-t border-zinc-100">
+                                <p className="text-xs text-zinc-500 mb-2">Profissionais ocultos:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {metricsData.barberMetrics?.filter((b: any) => hiddenBarbers.includes(b.id)).map((b: any) => (
+                                    <button
+                                      key={b.id}
+                                      onClick={() => setHiddenBarbers(prev => prev.filter(id => id !== b.id))}
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs rounded-md transition-colors"
+                                    >
+                                      <Plus className="w-3 h-3" /> {b.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {(!metricsData.barberMetrics || metricsData.barberMetrics.length === 0) && (
+                              <div className="py-8 text-center text-zinc-500 italic text-sm">Nenhum dado no período</div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </>
                 )}
               </div>
@@ -1940,7 +2063,7 @@ export default function PainelSalao() {
                         max="48" 
                         value={config?.cancel_limit_hours ?? 2} 
                         onChange={e => setConfig({...config, cancel_limit_hours: parseInt(e.target.value) || 0})} 
-                        className="bg-white border-zinc-200 w-32" 
+                        className="bg-white border-zinc-200 text-zinc-900 w-32" 
                       />
                     </div>
 
@@ -1971,7 +2094,7 @@ export default function PainelSalao() {
                           type="date" 
                           id="new-closed-date"
                           min={format(new Date(), 'yyyy-MM-dd')}
-                          className="bg-white border-zinc-200" 
+                          className="bg-white border-zinc-200 text-zinc-900" 
                         />
                         <Button 
                           type="button" 
