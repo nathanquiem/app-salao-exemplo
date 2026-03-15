@@ -1337,7 +1337,7 @@ export default function PainelSalao() {
                       </div>
                       <div className="space-y-2">
                         <Label>Telefone / WhatsApp (Opcional)</Label>
-                        <Input placeholder="(11) 99999-9999" value={quickPhone} onChange={e => setQuickPhone(maskPhoneInput(e.target.value))} className="bg-white border-zinc-200" maxLength={15} />
+                        <Input placeholder="(11) 99999-9999" value={quickPhone} onChange={e => setQuickPhone(maskPhoneInput(e.target.value))} className="bg-white border-zinc-200 text-zinc-900" maxLength={15} />
                       </div>
                     </div>
                     
@@ -2138,16 +2138,16 @@ export default function PainelSalao() {
                     <div className="space-y-3 border-t border-zinc-200/50 pt-6">
                       <Label>Exceções (Dias Fechados)</Label>
                       <CardDescription>Adicione datas específicas onde o salão estará de folga/fechado, e horários não serão gerados.</CardDescription>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input 
                           type="date" 
                           id="new-closed-date"
                           min={format(new Date(), 'yyyy-MM-dd')}
-                          className="bg-white border-zinc-200 text-zinc-900" 
+                          className="bg-white border-zinc-200 text-zinc-900 w-full sm:w-auto" 
                         />
                         <Button 
                           type="button" 
-                          className="bg-green-100 hover:bg-zinc-700" 
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto" 
                           onClick={() => {
                             const input = document.getElementById('new-closed-date') as HTMLInputElement
                             addClosedDate(input.value)
