@@ -41,13 +41,13 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password
         })
         if (error) throw error
       } else {
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             data: {
@@ -66,10 +66,10 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             id: data.user.id,
             full_name: fullName,
             phone,
-            email,
+            email: email.trim(),
             role: 'client',
             
-          }).then(() => {})
+          }).catch((e) => { console.warn('Fallback insert skipped:', e?.message) })
         }
 
         // If session came back immediately (email confirmation OFF),
@@ -132,6 +132,8 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Seu nome"
+                  autoComplete="name"
+                  autoCapitalize="words"
                   required={!isLogin}
                   className="bg-white border-green-200 focus:border-green-700 text-green-900"
                 />
@@ -140,9 +142,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                 <Label htmlFor="phone" className="text-green-800">Celular (WhatsApp)</Label>
                 <Input 
                   id="phone" 
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
                   placeholder="(00) 00000-0000"
+                  autoComplete="tel"
                   required={!isLogin}
                   className="bg-white border-green-200 focus:border-green-700 text-green-900"
                 />
@@ -158,6 +162,9 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
               required
               className="bg-white border-green-200 focus:border-green-700 text-green-900"
             />
