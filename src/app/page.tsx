@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
@@ -209,12 +209,12 @@ export default function LandingPage() {
             {/* Hair Services */}
             {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                <h3 className="text-2xl font-bold text-green-900 mb-6 text-center">
                   Cabelo
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {services.filter(s => s.name?.toLowerCase().includes('cabelo') || s.name?.toLowerCase().includes('corte') || s.name?.toLowerCase().includes('coloração') || s.name?.toLowerCase().includes('mechas') || s.name?.toLowerCase().includes('escova') || s.name?.toLowerCase().includes('penteado') || s.name?.toLowerCase().includes('hidratação') || s.description?.toLowerCase().includes('cabelo')).map((service) => (
-                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group cursor-pointer active:scale-[0.98]" onClick={() => user ? window.location.href = '/dashboard' : setIsAuthModalOpen(true)}>
                       <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
                         <img
                           src={service.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"}
@@ -241,12 +241,12 @@ export default function LandingPage() {
             {/* Nails Services */}
             {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                <h3 className="text-2xl font-bold text-green-900 mb-6 text-center">
                   Unhas
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {services.filter(s => s.name?.toLowerCase().includes('unha') || s.name?.toLowerCase().includes('manicure') || s.name?.toLowerCase().includes('pedicure') || s.name?.toLowerCase().includes('esmaltação') || s.name?.toLowerCase().includes('alongamento') || s.description?.toLowerCase().includes('unha')).map((service) => (
-                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group cursor-pointer active:scale-[0.98]" onClick={() => user ? window.location.href = '/dashboard' : setIsAuthModalOpen(true)}>
                       <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
                         <img
                           src={service.image_url || "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?q=80&w=800&auto=format&fit=crop"}
@@ -273,12 +273,12 @@ export default function LandingPage() {
             {/* Other Services */}
             {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold text-green-900 mb-6 flex items-center gap-2">
+                <h3 className="text-2xl font-bold text-green-900 mb-6 text-center">
                   Outros Serviços
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {services.filter(s => !s.name?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('corte') && !s.name?.toLowerCase().includes('coloração') && !s.name?.toLowerCase().includes('mechas') && !s.name?.toLowerCase().includes('escova') && !s.name?.toLowerCase().includes('penteado') && !s.name?.toLowerCase().includes('hidratação') && !s.description?.toLowerCase().includes('cabelo') && !s.name?.toLowerCase().includes('unha') && !s.name?.toLowerCase().includes('manicure') && !s.name?.toLowerCase().includes('pedicure') && !s.name?.toLowerCase().includes('esmaltação') && !s.name?.toLowerCase().includes('alongamento') && !s.description?.toLowerCase().includes('unha')).map((service) => (
-                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group">
+                    <div key={service.id} className="rounded-2xl border border-green-100 bg-white p-5 flex flex-col hover:border-green-300 hover:shadow-lg hover:shadow-green-900/5 transition-all group cursor-pointer active:scale-[0.98]" onClick={() => user ? window.location.href = '/dashboard' : setIsAuthModalOpen(true)}>
                       <div className="w-full h-48 rounded-xl mb-5 overflow-hidden bg-green-100">
                         <img
                           src={service.image_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"}
