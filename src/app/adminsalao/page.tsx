@@ -190,7 +190,7 @@ export default function PainelSalao() {
         .select(`
           *,
           services_salao (name, price, duration_minutes),
-          profiles_salao:client_id (id, full_name, created_at, phone),
+          profiles_salao:client_id (id, full_name, created_at, phone, email),
           barbers_salao (name)
         `, { count: 'exact' })
         .gte('start_time', startStr)
@@ -264,6 +264,28 @@ export default function PainelSalao() {
     try {
       const { error } = await supabase.from('bookings_salao').update({ status: 'canceled' }).eq('id', id)
       if (error) throw error
+
+      const bookingToCancel = agendaBookings.find((b: any) => b.id === id)
+      if (config?.evolution_instance_id && bookingToCancel) {
+        const bookingDate = parseISO(bookingToCancel.start_time)
+        fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: "delete_agendamento",
+            instanceName: config.evolution_instance_id,
+            apikey_id: config.apikey_id,
+            phone: bookingToCancel.profiles_salao?.phone || bookingToCancel.guest_phone || '',
+            clientEmail: bookingToCancel.profiles_salao?.email || '',
+            clientName: bookingToCancel.profiles_salao?.full_name || bookingToCancel.guest_name || 'Cliente',
+            serviceName: bookingToCancel.services_salao?.name || 'Servico',
+            barberName: bookingToCancel.barbers_salao?.name || 'Profissional',
+            bookingDate: format(bookingDate, 'dd/MM/yyyy'),
+            bookingTime: format(bookingDate, 'HH:mm')
+          })
+        }).catch(err => console.error(err))
+      }
+
       setAgendaBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'canceled' } : b))
       if (selectedBooking?.id === id) setSelectedBooking(null)
     } catch (err: any) {
@@ -718,11 +740,14 @@ export default function PainelSalao() {
         }
 
         // Fire & Forget webhook
-        fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
-        }).catch(err => console.error("Erro ao notificar webhook whatsapp:", err))
+        const fullPayload = { ...webhookPayload, clientEmail: '' };
+        try {
+          await fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fullPayload)
+          })
+        } catch(err) { console.error("Erro ao notificar webhook whatsapp:", err) }
       }
 
       alert("Encaixe confirmado com sucesso!")

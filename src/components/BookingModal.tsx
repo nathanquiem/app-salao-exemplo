@@ -31,7 +31,7 @@ interface BookingModalProps {
 const supabase = createClient()
 
 export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: BookingModalProps) {
-  const { profile } = useAuthStore()
+  const { profile, user } = useAuthStore()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [services, setServices] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -354,12 +354,13 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
       if (bookingError) throw bookingError
 
       // Dispatch the WhatsApp Webhook if instance is configured
-      if (config?.evolution_instance_id && profile?.phone) {
+      if (config?.evolution_instance_id) {
         const webhookPayload = {
           event: "novo_agendamento",
           instanceName: config.evolution_instance_id,
           apikey_id: config.apikey_id,
-          phone: profile.phone,
+          phone: profile?.phone || '',
+          clientEmail: profile?.email || user?.email || '',
           clientName: profile?.full_name || 'Cliente',
           serviceName: selectedService.name,
           barberName: selectedBarber ? selectedBarber.name : 'Profissional',
@@ -367,11 +368,15 @@ export function BookingModal({ isOpen, onClose, onSuccess, userId, empresaId }: 
           bookingTime: time
         }
 
-        fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookPayload)
-        }).catch(err => console.error("Erro ao notificar webhook whatsapp:", err))
+        try {
+          await fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookPayload)
+          })
+        } catch (err) {
+          console.error("Erro ao notificar webhook whatsapp:", err)
+        }
       }
 
       onSuccess()

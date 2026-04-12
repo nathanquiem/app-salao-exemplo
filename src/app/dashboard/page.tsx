@@ -42,20 +42,28 @@ export default function DashboardPage() {
     async function loadData() {
       if (authLoading || !user) return
       try {
-        if (!profile) {
-          const { data: prof } = await supabase.from('profiles_salao').select('*').eq('id', user.id).maybeSingle()
-          if (prof) setProfile(prof)
-        }
-        const { data: config } = await supabase
-          .from('business_config_salao').select('cancel_limit_hours').limit(1).maybeSingle()
-        if (config) setCancelLimit(config.cancel_limit_hours)
+        const fetchProfile = !profile 
+          ? supabase.from('profiles_salao').select('*').eq('id', user.id).maybeSingle()
+          : Promise.resolve({ data: null });
 
-        const { data: userBookings } = await supabase
-          .from('bookings_salao')
-          .select(`*, services_salao (name, duration_minutes, price), barbers_salao (name)`)
-          .eq('client_id', user.id)
-          .order('start_time', { ascending: true })
-        if (userBookings) setBookings(userBookings)
+        const fetchConfig = supabase.from('business_config_salao').select('cancel_limit_hours').limit(1).maybeSingle();
+
+        const fetchBookings = supabase.from('bookings_salao').select(`
+            *,
+            services_salao (name, duration_minutes, price),
+            barbers_salao (name)
+          `).eq('client_id', user.id).order('start_time', { ascending: true });
+
+        const [profResult, configResult, bookingsResult] = await Promise.all([
+          fetchProfile,
+          fetchConfig,
+          fetchBookings
+        ]);
+
+        if (profResult.data) setProfile(profResult.data);
+        if (configResult.data) setCancelLimit(configResult.data.cancel_limit_hours);
+        if (bookingsResult.data) setBookings(bookingsResult.data);
+
       } catch (error) {
         console.error("Error loading dashboard data", error)
       } finally {
@@ -73,8 +81,33 @@ export default function DashboardPage() {
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return
     try {
+      const { data: bookingData } = await supabase.from('bookings_salao').select('start_time, services_salao (name), barbers_salao (name), guest_name, guest_phone').eq('id', bookingId).single();
+
       const { error } = await supabase.from('bookings_salao').update({ status: 'canceled' }).eq('id', bookingId)
       if (error) throw error
+
+      const { data: bizConfig } = await supabase.from('business_config_salao').select('evolution_instance_id, apikey_id').limit(1).single();
+
+      if (bizConfig?.evolution_instance_id && bookingData) {
+        const bookingDate = parseISO(bookingData.start_time);
+        fetch('https://n8n.mundoai.com.br/webhook/novo-agendamento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: "delete_agendamento",
+            instanceName: bizConfig.evolution_instance_id,
+            apikey_id: bizConfig.apikey_id,
+            phone: profile?.phone || bookingData.guest_phone || '',
+            clientEmail: profile?.email || user?.email || '',
+            clientName: profile?.full_name || bookingData.guest_name || 'Cliente',
+            serviceName: (bookingData.services_salao as any)?.name || 'Serviço',
+            barberName: (bookingData.barbers_salao as any)?.name || 'Profissional',
+            bookingDate: format(bookingDate, 'dd/MM/yyyy'),
+            bookingTime: format(bookingDate, 'HH:mm')
+          })
+        }).catch(err => console.error(err));
+      }
+
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'canceled' } : b))
       alert("Agendamento cancelado com sucesso.")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
